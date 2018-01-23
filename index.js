@@ -76,7 +76,10 @@ function gulpFlatBlog(templates) {
       path: 'index.html'
     });
     for (i in posts) {
-      pageIndex.push(posts[i]);
+      if (pageIndex.includes(posts[i])) {
+      } else {
+          pageIndex.push(posts[i]);
+      }
     }
     file.contents = new Buffer(templates.index({
       posts: posts
