@@ -33,8 +33,11 @@ function gulpFlatBlog(templates) {
   }
 
   var posts = [];
+  var finalposts = [];
+
 
   function singlePost(file, encoding, callback) {
+
     if (file.isStream()) {
       this.emit('error', new PluginError('gulp-flat-blog',
         'Streams are not supported.'));
@@ -55,35 +58,46 @@ function gulpFlatBlog(templates) {
         post.slug = file.relative.substring(0, file.relative.lastIndexOf('.'));
       }
 
-      file.contents = new Buffer(templates.single({post: post, index: pageIndex}));
-      file.path = path.join(file.base, post.slug + '.html');
-
-      post.createdAt = file.stat.birthtime;
+      // post.createdAt = file.stat.birthtime;
+      post.createdAt = post.pubdate;
       post.updatedAt = file.stat.mtime;
       posts.push(post);
+
+      file.contents = new Buffer(templates.single({post: post}));
+      file.path = path.join(file.base, post.slug + '.html');
+
     }
     this.push(file);
-    return callback();
+    callback();
   }
 
+
   function allPosts(callback) {
+
     posts.sort(function(lhs, rhs) {
 
-      return new Date(rhs.date ? rhs.date : rhs.createdAt) - new Date(
-        lhs.date ? lhs.date : lhs.createdAt);
+      return new Date(rhs.date ? rhs.date : rhs.pubdate) - new Date(
+        lhs.date ? lhs.date : lhs.pubdate);
     });
+
     var file = new File({
       path: 'index.html'
     });
-    for (i in posts) {
-      if (pageIndex.includes(posts[i])) {
-      } else {
-          pageIndex.push(posts[i]);
-      }
-    }
+
     file.contents = new Buffer(templates.index({
       posts: posts
     }));
+
+    var vars = {};
+
+    for (i in posts) {
+        vars['file' + i] = new File({path: 'single.html'});
+
+        vars['file' + i].contents = new Buffer(templates.single({post: posts[i], posts: posts}));
+        vars['file' + i].path = path.join(vars['file' + i].base, posts[i].slug + '.html');
+        this.push(vars['file' + i]);
+    }
+
     this.push(file);
     callback();
   }
