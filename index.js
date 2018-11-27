@@ -8,6 +8,7 @@ var hljs = require('highlight.js');
 var pageIndex = [];
 
 var markdownit = require('markdown-it')({
+  html: true,
   highlight: function(str, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {
